@@ -5,13 +5,13 @@ import VirtualScrollCard from './VirtualScrollCard.vue'
 const contentContainer = ref()
 const contentHeight = ref(0)
 const viewPortHeight = ref(560)
-const itemHeight = ref(56)
+const itemHeight = ref(56) // height 40 + 16 gap
 const dummyData = ref<any>([])
 const visibleItems = ref<any>([])
 const offsetY = ref(0)
 
 const getDummyData = () => {
-  dummyData.value = new Array(10000000)?.fill(null)?.map((_: null, index: number) => ({ id: index, name: 'Lorem' + index }))
+  dummyData.value = new Array(10000)?.fill(null)?.map((_: null, index: number) => ({ id: index, name: 'Lorem' + index }))
   contentHeight.value = dummyData.value.length * itemHeight.value
   const totalVisible = Math.ceil(viewPortHeight.value / itemHeight.value)
   visibleItems.value = dummyData.value.slice(0, totalVisible)
@@ -25,7 +25,8 @@ const handleScroll = (e: Event) => {
   const totalVisible = Math.ceil(viewPortHeight.value / itemHeight.value)
 
   offsetY.value = startNode * itemHeight.value
-  const newData = [...dummyData.value.slice(startNode, startNode + totalVisible)]
+  const newData = dummyData.value.slice(startNode, startNode + totalVisible)
+
   visibleItems.value = newData.map((item: any, index: number) => ({
     id: startNode + index,
     name: 'Lorem' + Number(startNode + index)

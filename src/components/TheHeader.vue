@@ -13,14 +13,14 @@ const links = ref([
   <nav class="bg-white border-gray-200 dark:bg-gray-900">
     <div class="container mx-auto p-4">
       <div class="flex flex-wrap items-center justify-between">
-        <a href="https://vuejs.org/" class="flex items-center space-x-3 rtl:space-x-reverse">
+        <RouterLink class="flex items-center space-x-3 rtl:space-x-reverse" to="/">
           <img
             src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Vue.js_Logo_2.svg/2367px-Vue.js_Logo_2.svg.png"
             class="h-8" alt="Vue logo" />
           <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
             Practices
           </span>
-        </a>
+        </RouterLink>
         <button data-collapse-toggle="navbar-default" type="button"
           class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
           aria-controls="navbar-default" aria-expanded="false">
