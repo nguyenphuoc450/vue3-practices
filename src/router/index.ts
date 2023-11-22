@@ -9,6 +9,11 @@ const router = createRouter({
 			component: () => import('~/views/HomeView.vue')
 		},
 		{
+			path: '/waifu',
+			name: 'waifu',
+			component: () => import('~/views/WaifuView.vue')
+		},
+		{
 			path: '/virtual-scroll',
 			name: 'virtual-scroll',
 			component: () => import('~/views/VirtualScrollView.vue')

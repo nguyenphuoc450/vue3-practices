@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import VirtualScrollBasic from '~/components/virtual-scroll/VirtualScrollBasic.vue'
 
 </script>
 
