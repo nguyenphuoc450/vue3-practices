@@ -8,7 +8,7 @@ const isLoading = ref(false)
 const getWaifu = async () => {
   isLoading.value = true
 
-  const { data } = await waifuService.getManyImage()
+  const { data } = await waifuService.getManyImage('waifu')
   waifu.value = data.value?.files || []
 
   isLoading.value = false
@@ -20,15 +20,18 @@ getWaifu()
 <template>
   <div class="page">
     <div class="container mx-auto p-4">
-      <h1 class="mb-8 text-3xl font-bold text-center">
+      <h1 class="mb-4 text-3xl font-bold text-center">
         Waifu
       </h1>
+      <p class="mb-8 text-base text-center">
+        This page will receive 30 random images every refresh
+      </p>
 
       <button
         class="mb-6 ml-auto flex items-center justify-center gap-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         type="button" :disabled="isLoading" @click="getWaifu">
         <span>
-          Refresh
+          {{ isLoading ? 'Refreshing...' : 'Refresh' }}
         </span>
         <svg aria-hidden="true" class="w-4 h-4 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
           viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg" v-show="isLoading">
@@ -42,7 +45,9 @@ getWaifu()
       </button>
 
       <div class="columns-5 gap-0" v-if="waifu?.length > 0">
-        <img class="w-full h-auto" v-for="i in waifu" :key="i" :src="i" alt="">
+        <a :href="i" target="_blank" v-for="i in waifu" :key="i">
+          <img class="w-full h-auto" :src="i" alt="">
+        </a>
       </div>
 
       <div class="flex items-center justify-center gap-4" v-else>
