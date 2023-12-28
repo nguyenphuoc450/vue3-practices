@@ -17,6 +17,11 @@ const router = createRouter({
 			path: '/virtual-scroll',
 			name: 'virtual-scroll',
 			component: () => import('~/views/VirtualScrollView.vue')
+		},
+		{
+			path: '/list-sortable',
+			name: 'list-sortable',
+			component: () => import('~/views/ListSortableView.vue')
 		}
 	]
 })
