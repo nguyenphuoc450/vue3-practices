@@ -22,6 +22,11 @@ const router = createRouter({
 			path: '/list-sortable',
 			name: 'list-sortable',
 			component: () => import('~/views/ListSortableView.vue')
+		},
+		{
+			path: '/pdf-handle',
+			name: 'pdf-handle',
+			component: () => import('~/views/PdfHandleView.vue')
 		}
 	]
 })
