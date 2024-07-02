@@ -2,18 +2,21 @@
 import * as PDFJS from 'pdfjs-dist'
 import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
-import { ref } from 'vue'
-
-const ID_PDF_VIEWER = 'pdf-viewer'
-const Class_ITEM_PAGE_PDF = 'pdf-page-canvas'
+import { onBeforeUnmount, ref } from 'vue'
 
 // // The workerSrc property shall be specified.
 PDFJS.GlobalWorkerOptions.workerSrc = PDFJS.GlobalWorkerOptions.workerSrc =
 	new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
 
-const inputFile = ref<HTMLInputElement>()
+const ID_PDF_VIEWER = 'pdf-viewer'
+const Class_ITEM_PAGE_PDF = 'pdf-page-canvas'
+const ID_SIGNATURE = 'signature'
 
-const onChangeFile = (e: Event) => {
+const inputFilePdf = ref<HTMLInputElement>()
+const inputFileImage = ref<HTMLInputElement>()
+const imageSignature = ref('')
+
+const onChangeFilePdf = (e: Event) => {
 	const files = (e.target as HTMLInputElement).files
 
 	if (files && files?.length > 0) {
@@ -36,95 +39,10 @@ const onChangeFile = (e: Event) => {
 	}
 
 	// Reset value file
-	if (inputFile.value) {
-		inputFile.value.value = ''
+	if (inputFilePdf.value) {
+		inputFilePdf.value.value = ''
 	}
 }
-
-const imageBase64ToFileObject = async (b64img: string) => {
-	const nameFile = `${new Date().getTime()}.png`
-	const mimeType = base64MimeType(b64img)
-
-	const file = await urltoFile(b64img, nameFile, mimeType)
-	console.log('file', file)
-}
-
-//return a promise that resolves with a File instance
-const urltoFile = async (url: string, filename: string, mimeType: any) => {
-	return fetch(url)
-		.then(function (res) {
-			return res.arrayBuffer()
-		})
-		.then(function (buf) {
-			return new File([buf], filename, { type: mimeType })
-		})
-}
-
-//return mime Type of bs64
-const base64MimeType = (encoded: any) => {
-	var result = null
-
-	if (typeof encoded !== 'string') {
-		return result
-	}
-
-	var mime = encoded.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/)
-
-	if (mime && mime.length) {
-		result = mime[1]
-	}
-
-	return result
-}
-
-// const handleViewPDF = (TypedArray: Uint8Array) => {
-//   // Asynchronous download of PDF
-//   const loadingTask = PDFJS.getDocument(TypedArray)
-//   loadingTask.promise.then(
-//     (pdf) => {
-//       console.log('PDF loaded')
-
-//       const totalPages = pdf?.numPages || 1
-//       const scale = 1.5
-//       const viewer = document.getElementById(ID_PDF_VIEWER) as HTMLElement
-
-//       for (let i = 1; i <= totalPages; i++) {
-//         const canvas = document.createElement('canvas')
-//         const context = canvas.getContext('2d')
-//         canvas.className = Class_ITEM_PAGE_PDF
-//         // viewer.appendChild(canvas)
-
-//         // Render
-//         pdf.getPage(i).then((page) => {
-//           const viewport = page.getViewport({ scale })
-//           canvas.height = viewport.height
-//           canvas.width = viewport.width
-
-//           const renderContext = {
-//             canvasContext: context,
-//             viewport: viewport,
-//           }
-
-//           page.render(renderContext as any).promise.then(() => {
-//             // console.log(`Page ${i} rendered`)
-//             // Await render content to get image
-//             const imageDataURL = canvas.toDataURL('image/png')
-//             const image = document.createElement('img')
-//             image.src = imageDataURL
-//             image.className = Class_ITEM_PAGE_PDF
-//             viewer.appendChild(image)
-
-//             // imageBase64ToFileObject(imageDataURL)
-//           })
-//         })
-//       }
-//     },
-//     (reason) => {
-//       // PDF loading error
-//       console.error(reason)
-//     },
-//   )
-// }
 
 const handleViewPDF = (TypedArray: Uint8Array) => {
 	// Asynchronous download of PDF
@@ -208,34 +126,180 @@ const handleExport = async () => {
 			doc.addPage()
 			doc.addImage(imgData, 'PNG', 0, yPosition, imgWidth, imgHeight)
 		}
-
 		window.open(doc.output('bloburl'), '_blank')
 		// doc.save('file.pdf')
 	} catch (error) {
 		console.log(error)
 	}
 }
+
+const clickInputSignature = () => {
+	inputFileImage.value?.click()
+}
+
+const onChangeImageSignature = (e: Event) => {
+	const files = (e.target as HTMLInputElement).files
+
+	if (files && files?.length > 0) {
+		const file = files[0]
+		if (imageSignature.value) {
+			window.URL.revokeObjectURL(imageSignature.value)
+		}
+		imageSignature.value = window.URL.createObjectURL(file)
+
+		createSignature()
+	}
+
+	// Reset value file
+	if (inputFileImage.value) {
+		inputFileImage.value.value = ''
+	}
+}
+
+const createSignature = () => {
+	const elementHTML = document.getElementById(ID_PDF_VIEWER)
+	const div = document.createElement('div')
+	div.id = ID_SIGNATURE
+
+	const img = document.createElement('img')
+	img.src = imageSignature.value
+	img.style.maxWidth = '400px'
+	img.style.maxHeight = '200px'
+	img.style.objectFit = 'cover'
+
+	div.addEventListener('mousedown', (event: Event) => {
+		event.preventDefault()
+		startMouseMove()
+	})
+
+	div.appendChild(img)
+	elementHTML?.appendChild(div)
+
+	startMouseMove()
+}
+
+const onMouseMove = (e: MouseEvent) => {
+	const sign = document.getElementById(ID_SIGNATURE)
+	const positionY =
+		e.pageY - (e?.currentTarget as HTMLElement)?.getBoundingClientRect()?.top
+	const positionX = e.offsetX
+
+	if (sign) {
+		sign.style.top = positionY + 'px'
+		sign.style.left = positionX + 'px'
+	}
+}
+
+const startMouseMove = () => {
+	const elementHTML = document.getElementById(ID_PDF_VIEWER)
+	elementHTML?.addEventListener('mousemove', onMouseMove)
+
+	const sign = document.getElementById(ID_SIGNATURE)
+	if (sign) {
+		document.body.style.cursor = 'move'
+		sign.classList.add('moving')
+		sign.classList.remove('moved')
+	}
+}
+
+const stopMouseMove = () => {
+	const elementHTML = document.getElementById(ID_PDF_VIEWER)
+	elementHTML?.removeEventListener('mousemove', onMouseMove)
+
+	const sign = document.getElementById(ID_SIGNATURE)
+	if (sign) {
+		document.body.style.cursor = 'default'
+		sign.classList.add('moved')
+		sign.classList.remove('moving')
+	}
+}
+
+const dropSignature = (e: Event) => {
+	stopMouseMove()
+}
+
+onBeforeUnmount(() => {
+	stopMouseMove()
+})
 </script>
 
 <template>
-	<div class="p-1 lg:p-4 h-screen bg-white overflow-auto">
+	<div class="p-1 lg:p-4 h-screen bg-[#f0f3f5] overflow-auto">
 		<div class="mx-auto">
 			<div class="mb-4 flex items-center gap-4">
-				<input type="file" ref="inputFile" @change="onChangeFile" />
-				<!-- <ButtonExportPDF :idElement="ID_PDF_VIEWER" /> -->
+				<input
+					type="file"
+					accept="application/pdf"
+					ref="inputFilePdf"
+					@change="onChangeFilePdf"
+				/>
+
+				<!-- Import image signature -->
 				<button
-					class="p-1 border border-solid rounded cursor-pointer"
+					class="p-1 bg-white border border-solid rounded"
+					type="button"
+					@click="clickInputSignature"
+				>
+					Signature
+				</button>
+				<input
+					class="hidden"
+					type="file"
+					accept="image/*"
+					ref="inputFileImage"
+					@change="onChangeImageSignature"
+				/>
+
+				<button
+					class="p-1 bg-white border border-solid rounded"
+					type="button"
 					@click="handleExport"
 				>
 					Export
 				</button>
 			</div>
 
-			<div
-				class="p-1 lg:p-4 max-w-[1024px] mx-auto text-center border border-solid border-gray-200 rounded-lg"
-			>
-				<div :id="ID_PDF_VIEWER"></div>
+			<div class="p-1 lg:p-4 max-w-[1024px] mx-auto text-center">
+				<div
+					:id="ID_PDF_VIEWER"
+					class="relative overflow-hidden"
+					@click="dropSignature"
+				></div>
 			</div>
 		</div>
 	</div>
 </template>
+
+<style lang="scss" scoped>
+:deep {
+	.pdf-page-canvas {
+		background-color: #ffffff;
+		border: 1px solid #eeeef0;
+		border-radius: 8px;
+
+		&:not(:last-child) {
+			margin-bottom: 4px;
+		}
+
+		img {
+			border-radius: 8px;
+		}
+	}
+
+	#signature {
+		position: absolute;
+		transform: translate(-50%, -50%);
+		pointer-events: none;
+		&.moved {
+			pointer-events: unset;
+			img {
+				cursor: pointer;
+			}
+		}
+		&.moving {
+			border: 1px dashed rgb(58, 178, 248);
+			border-radius: 4px;
+		}
+	}
+}
+</style>
