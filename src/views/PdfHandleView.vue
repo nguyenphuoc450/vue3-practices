@@ -3,6 +3,7 @@ import * as PDFJS from 'pdfjs-dist'
 import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
 import { onBeforeUnmount, ref } from 'vue'
+import SignaturePad from '~/components/SignaturePad.vue'
 
 // // The workerSrc property shall be specified.
 PDFJS.GlobalWorkerOptions.workerSrc = PDFJS.GlobalWorkerOptions.workerSrc =
@@ -15,6 +16,7 @@ const ID_SIGNATURE = 'signature'
 const inputFilePdf = ref<HTMLInputElement>()
 const inputFileImage = ref<HTMLInputElement>()
 const imageSignature = ref('')
+const visibleSignaturePad = ref(false)
 
 const onChangeFilePdf = (e: Event) => {
 	const files = (e.target as HTMLInputElement).files
@@ -133,10 +135,6 @@ const handleExport = async () => {
 	}
 }
 
-const clickInputSignature = () => {
-	inputFileImage.value?.click()
-}
-
 const onChangeImageSignature = (e: Event) => {
 	const files = (e.target as HTMLInputElement).files
 
@@ -147,7 +145,7 @@ const onChangeImageSignature = (e: Event) => {
 		}
 		imageSignature.value = window.URL.createObjectURL(file)
 
-		createSignature()
+		initSignatureByUpload()
 	}
 
 	// Reset value file
@@ -156,7 +154,7 @@ const onChangeImageSignature = (e: Event) => {
 	}
 }
 
-const createSignature = () => {
+const initSignatureByUpload = () => {
 	const elementHTML = document.getElementById(ID_PDF_VIEWER)
 	const div = document.createElement('div')
 	div.id = ID_SIGNATURE
@@ -166,6 +164,29 @@ const createSignature = () => {
 	img.style.maxWidth = '400px'
 	img.style.maxHeight = '200px'
 	img.style.objectFit = 'cover'
+
+	div.addEventListener('mousedown', (event: Event) => {
+		event.preventDefault()
+		startMouseMove()
+	})
+
+	div.appendChild(img)
+	elementHTML?.appendChild(div)
+
+	startMouseMove()
+}
+
+const toggleSignaturePad = () => {
+	visibleSignaturePad.value = !visibleSignaturePad.value
+}
+
+const initSignatureByPad = (url: string) => {
+	const elementHTML = document.getElementById(ID_PDF_VIEWER)
+	const div = document.createElement('div')
+	div.id = ID_SIGNATURE
+
+	const img = document.createElement('img')
+	img.src = url
 
 	div.addEventListener('mousedown', (event: Event) => {
 		event.preventDefault()
@@ -234,13 +255,13 @@ onBeforeUnmount(() => {
 					@change="onChangeFilePdf"
 				/>
 
-				<!-- Import image signature -->
+				<!-- upload image signature -->
 				<button
 					class="p-1 bg-white border border-solid rounded"
 					type="button"
-					@click="clickInputSignature"
+					@click="inputFileImage?.click()"
 				>
-					Signature
+					Upload image signature
 				</button>
 				<input
 					class="hidden"
@@ -253,10 +274,22 @@ onBeforeUnmount(() => {
 				<button
 					class="p-1 bg-white border border-solid rounded"
 					type="button"
+					@click="toggleSignaturePad"
+				>
+					Toggle signature pad
+				</button>
+
+				<button
+					class="p-1 bg-white border border-solid rounded"
+					type="button"
 					@click="handleExport"
 				>
-					Export
+					Export Pdf
 				</button>
+			</div>
+
+			<div class="mb-4" v-if="visibleSignaturePad">
+				<SignaturePad @onCreate="initSignatureByPad" />
 			</div>
 
 			<div class="p-1 lg:p-4 max-w-[1024px] mx-auto text-center">
