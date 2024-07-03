@@ -11,12 +11,12 @@ PDFJS.GlobalWorkerOptions.workerSrc = PDFJS.GlobalWorkerOptions.workerSrc =
 
 const ID_PDF_VIEWER = 'pdf-viewer'
 const Class_ITEM_PAGE_PDF = 'pdf-page-canvas'
-const ID_SIGNATURE = 'signature'
 
 const inputFilePdf = ref<HTMLInputElement>()
 const inputFileImage = ref<HTMLInputElement>()
 const imageSignature = ref('')
 const visibleSignaturePad = ref(false)
+const currentIdSignatureElement = ref('')
 
 const onChangeFilePdf = (e: Event) => {
 	const files = (e.target as HTMLInputElement).files
@@ -135,6 +135,10 @@ const handleExport = async () => {
 	}
 }
 
+const toggleSignaturePad = () => {
+	visibleSignaturePad.value = !visibleSignaturePad.value
+}
+
 const onChangeImageSignature = (e: Event) => {
 	const files = (e.target as HTMLInputElement).files
 
@@ -156,18 +160,53 @@ const onChangeImageSignature = (e: Event) => {
 
 const initSignatureByUrl = (url: string) => {
 	const elementHTML = document.getElementById(ID_PDF_VIEWER)
+
 	const div = document.createElement('div')
-	div.id = ID_SIGNATURE
+	const newId = 'signature-id-' + Math.random() * 10
+	div.id = newId
+	currentIdSignatureElement.value = newId
+	div.classList.add('signature')
+
+	// handle mousedown to move element
+	div.addEventListener('mousedown', (event: Event) => {
+		console.log('down')
+		event.preventDefault()
+		if (div.classList.contains('signature--selected')) {
+			startMouseMove()
+		}
+	})
 
 	const img = document.createElement('img')
-	img.src = imageSignature.value
+	img.src = url
 	img.style.maxWidth = '400px'
 	img.style.maxHeight = '200px'
 	img.style.objectFit = 'cover'
 
-	div.addEventListener('mousedown', (event: Event) => {
-		event.preventDefault()
-		startMouseMove()
+	// handle click iamge to style selected & show button delete
+	img.addEventListener('click', (event: Event) => {
+		console.log('clicked')
+		event.stopPropagation()
+		// Remove selected other signatures
+		const signatures = document.getElementsByClassName('signature')
+		if (signatures) {
+			for (let i = 0; i < signatures.length; i++) {
+				signatures[i].classList.remove('signature--selected')
+			}
+		}
+
+		// Add selectet current element click
+		div.classList.toggle('signature--selected')
+
+		const divPosition = div.getBoundingClientRect()
+		const buttonDelete = document.getElementById('btn-delete') as HTMLElement
+
+		if (div.classList.contains('signature--selected')) {
+			currentIdSignatureElement.value = newId
+
+			buttonDelete.style.display = 'block'
+			buttonDelete.style.top = divPosition.top + divPosition.height + 12 + 'px'
+			buttonDelete.style.left = divPosition.left + 'px'
+		}
 	})
 
 	div.appendChild(img)
@@ -176,12 +215,8 @@ const initSignatureByUrl = (url: string) => {
 	startMouseMove()
 }
 
-const toggleSignaturePad = () => {
-	visibleSignaturePad.value = !visibleSignaturePad.value
-}
-
 const onMouseMove = (e: MouseEvent) => {
-	const sign = document.getElementById(ID_SIGNATURE)
+	const sign = document.getElementById(currentIdSignatureElement.value)
 	const positionY =
 		e.pageY - (e?.currentTarget as HTMLElement)?.getBoundingClientRect()?.top
 	const positionX = e.offsetX
@@ -196,28 +231,53 @@ const startMouseMove = () => {
 	const elementHTML = document.getElementById(ID_PDF_VIEWER)
 	elementHTML?.addEventListener('mousemove', onMouseMove)
 
-	const sign = document.getElementById(ID_SIGNATURE)
+	const sign = document.getElementById(currentIdSignatureElement.value)
 	if (sign) {
 		document.body.style.cursor = 'move'
-		sign.classList.add('moving')
-		sign.classList.remove('moved')
+		sign.classList.add('signature--moving')
+		sign.classList.remove('signature--dropped')
 	}
+
+	hideButtonDelete()
 }
 
 const stopMouseMove = () => {
 	const elementHTML = document.getElementById(ID_PDF_VIEWER)
 	elementHTML?.removeEventListener('mousemove', onMouseMove)
 
-	const sign = document.getElementById(ID_SIGNATURE)
+	const sign = document.getElementById(currentIdSignatureElement.value)
 	if (sign) {
 		document.body.style.cursor = 'default'
-		sign.classList.add('moved')
-		sign.classList.remove('moving')
+		sign.classList.add('signature--dropped')
+		sign.classList.remove('signature--moving')
+		sign.classList.remove('signature--selected')
 	}
+
+	hideButtonDelete()
+
+	// reset current id
+	currentIdSignatureElement.value = ''
 }
 
 const dropSignature = (e: Event) => {
 	stopMouseMove()
+}
+
+const deleteSignature = () => {
+	const div = document.getElementById(currentIdSignatureElement.value)
+
+	if (div) {
+		div.remove()
+	}
+
+	hideButtonDelete()
+}
+
+const hideButtonDelete = () => {
+	const buttonDelete = document.getElementById('btn-delete') as HTMLElement
+	if (buttonDelete) {
+		buttonDelete.style.display = 'none'
+	}
 }
 
 onBeforeUnmount(() => {
@@ -281,6 +341,15 @@ onBeforeUnmount(() => {
 				></div>
 			</div>
 		</div>
+
+		<button
+			id="btn-delete"
+			class="hidden absolute border border-solid border-rounded z-100"
+			type="button"
+			@click="deleteSignature"
+		>
+			Delete
+		</button>
 	</div>
 </template>
 
@@ -300,17 +369,18 @@ onBeforeUnmount(() => {
 		}
 	}
 
-	#signature {
+	.signature {
 		position: absolute;
 		transform: translate(-50%, -50%);
 		pointer-events: none;
-		&.moved {
+		&.signature--dropped {
 			pointer-events: unset;
 			img {
 				cursor: pointer;
 			}
 		}
-		&.moving {
+		&.signature--moving,
+		&.signature--selected {
 			border: 1px dashed rgb(58, 178, 248);
 			border-radius: 4px;
 		}
