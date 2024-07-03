@@ -143,9 +143,9 @@ const onChangeImageSignature = (e: Event) => {
 		if (imageSignature.value) {
 			window.URL.revokeObjectURL(imageSignature.value)
 		}
-		imageSignature.value = window.URL.createObjectURL(file)
-
-		initSignatureByUpload()
+		const url = window.URL.createObjectURL(file)
+		imageSignature.value = url
+		initSignatureByUrl(url)
 	}
 
 	// Reset value file
@@ -154,7 +154,7 @@ const onChangeImageSignature = (e: Event) => {
 	}
 }
 
-const initSignatureByUpload = () => {
+const initSignatureByUrl = (url: string) => {
 	const elementHTML = document.getElementById(ID_PDF_VIEWER)
 	const div = document.createElement('div')
 	div.id = ID_SIGNATURE
@@ -178,25 +178,6 @@ const initSignatureByUpload = () => {
 
 const toggleSignaturePad = () => {
 	visibleSignaturePad.value = !visibleSignaturePad.value
-}
-
-const initSignatureByPad = (url: string) => {
-	const elementHTML = document.getElementById(ID_PDF_VIEWER)
-	const div = document.createElement('div')
-	div.id = ID_SIGNATURE
-
-	const img = document.createElement('img')
-	img.src = url
-
-	div.addEventListener('mousedown', (event: Event) => {
-		event.preventDefault()
-		startMouseMove()
-	})
-
-	div.appendChild(img)
-	elementHTML?.appendChild(div)
-
-	startMouseMove()
 }
 
 const onMouseMove = (e: MouseEvent) => {
@@ -289,7 +270,7 @@ onBeforeUnmount(() => {
 			</div>
 
 			<div class="mb-4" v-if="visibleSignaturePad">
-				<SignaturePad @onCreate="initSignatureByPad" />
+				<SignaturePad @onCreate="initSignatureByUrl" />
 			</div>
 
 			<div class="p-1 lg:p-4 max-w-[1024px] mx-auto text-center">
