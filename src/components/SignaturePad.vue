@@ -51,6 +51,8 @@ const createSignature = () => {
 	const canvas = document.getElementById(ID_SIGN_CANVAS) as HTMLCanvasElement
 	const dataUrl = canvas?.toDataURL()
 	emit('onCreate', dataUrl)
+
+	clearCanvas()
 }
 
 onMounted(() => {

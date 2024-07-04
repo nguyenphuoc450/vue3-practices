@@ -28,11 +28,10 @@ const onChangeFilePdf = (e: Event) => {
 		fileReader.onload = (evt: any) => {
 			const typeTypedArray = new Uint8Array(evt.target?.result)
 
-			// Remove old items
-			const items = document.getElementsByClassName(Class_ITEM_PAGE_PDF)
-			const cloneItems = Array.from(items)
-			for (let item of cloneItems) {
-				item?.remove()
+			// Remove child node of ID_PDF_VIEWER
+			const viewer = document.getElementById(ID_PDF_VIEWER)
+			if (viewer) {
+				viewer.innerHTML = ''
 			}
 			// create new canvas
 			handleViewPDF(typeTypedArray)
@@ -41,9 +40,9 @@ const onChangeFilePdf = (e: Event) => {
 	}
 
 	// Reset value file
-	if (inputFilePdf.value) {
-		inputFilePdf.value.value = ''
-	}
+	// if (inputFilePdf.value) {
+	//   inputFilePdf.value.value = ''
+	// }
 }
 
 const handleViewPDF = (TypedArray: Uint8Array) => {
@@ -167,20 +166,32 @@ const initSignatureByUrl = (url: string) => {
 	currentIdSignatureElement.value = newId
 	div.classList.add('signature')
 
-	// handle mousedown to move element
-	div.addEventListener('mousedown', (event: Event) => {
-		console.log('down')
-		event.preventDefault()
-		if (div.classList.contains('signature--selected')) {
-			startMouseMove()
-		}
-	})
-
 	const img = document.createElement('img')
 	img.src = url
 	img.style.maxWidth = '400px'
 	img.style.maxHeight = '200px'
 	img.style.objectFit = 'cover'
+
+	const buttonDelete = document.createElement('button')
+	buttonDelete.classList.add('btn-delete')
+	buttonDelete.type = 'button'
+	buttonDelete.textContent = 'Delete'
+
+	// handle mousedown to move element
+	div.addEventListener('mousedown', (event: Event) => {
+		console.log('down')
+		event.preventDefault()
+		event.stopPropagation()
+
+		const target = event?.target as HTMLElement
+
+		if (
+			div.classList.contains('signature--selected') &&
+			target?.tagName === 'IMG'
+		) {
+			startMouseMove()
+		}
+	})
 
 	// handle click iamge to style selected & show button delete
 	img.addEventListener('click', (event: Event) => {
@@ -197,19 +208,20 @@ const initSignatureByUrl = (url: string) => {
 		// Add selectet current element click
 		div.classList.toggle('signature--selected')
 
-		const divPosition = div.getBoundingClientRect()
-		const buttonDelete = document.getElementById('btn-delete') as HTMLElement
-
 		if (div.classList.contains('signature--selected')) {
 			currentIdSignatureElement.value = newId
-
-			buttonDelete.style.display = 'block'
-			buttonDelete.style.top = divPosition.top + divPosition.height + 12 + 'px'
-			buttonDelete.style.left = divPosition.left + 'px'
 		}
 	})
 
+	// hand click button to delete element signature
+	buttonDelete.addEventListener('click', (event: Event) => {
+		event.stopPropagation()
+		console.log('click')
+		div.remove()
+	})
+
 	div.appendChild(img)
+	div.appendChild(buttonDelete)
 	elementHTML?.appendChild(div)
 
 	startMouseMove()
@@ -236,9 +248,8 @@ const startMouseMove = () => {
 		document.body.style.cursor = 'move'
 		sign.classList.add('signature--moving')
 		sign.classList.remove('signature--dropped')
+		sign.classList.remove('signature--selected')
 	}
-
-	hideButtonDelete()
 }
 
 const stopMouseMove = () => {
@@ -253,31 +264,13 @@ const stopMouseMove = () => {
 		sign.classList.remove('signature--selected')
 	}
 
-	hideButtonDelete()
-
 	// reset current id
 	currentIdSignatureElement.value = ''
 }
 
+// Click parent (ID_PDF_VIEWER) to stop
 const dropSignature = (e: Event) => {
 	stopMouseMove()
-}
-
-const deleteSignature = () => {
-	const div = document.getElementById(currentIdSignatureElement.value)
-
-	if (div) {
-		div.remove()
-	}
-
-	hideButtonDelete()
-}
-
-const hideButtonDelete = () => {
-	const buttonDelete = document.getElementById('btn-delete') as HTMLElement
-	if (buttonDelete) {
-		buttonDelete.style.display = 'none'
-	}
 }
 
 onBeforeUnmount(() => {
@@ -341,15 +334,6 @@ onBeforeUnmount(() => {
 				></div>
 			</div>
 		</div>
-
-		<button
-			id="btn-delete"
-			class="hidden absolute border border-solid border-rounded z-100"
-			type="button"
-			@click="deleteSignature"
-		>
-			Delete
-		</button>
 	</div>
 </template>
 
@@ -360,8 +344,8 @@ onBeforeUnmount(() => {
 		border: 1px solid #eeeef0;
 		border-radius: 8px;
 
-		&:not(:last-child) {
-			margin-bottom: 4px;
+		&:not(:first-child) {
+			margin-top: 4px;
 		}
 
 		img {
@@ -383,6 +367,20 @@ onBeforeUnmount(() => {
 		&.signature--selected {
 			border: 1px dashed rgb(58, 178, 248);
 			border-radius: 4px;
+		}
+
+		.btn-delete {
+			display: none;
+			position: absolute;
+			top: 104%;
+			left: 0px;
+			background-color: #ffffff;
+			border: 1px solid;
+			border-radius: 4px;
+			z-index: 100;
+		}
+		&.signature--selected .btn-delete {
+			display: block !important;
 		}
 	}
 }
