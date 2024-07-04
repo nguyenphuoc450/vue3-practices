@@ -3,154 +3,53 @@ import { ref, onMounted } from 'vue'
 
 const emit = defineEmits(['onCreate'])
 
-const canvas = ref<HTMLCanvasElement>()
+const ID_SIGN_CANVAS = 'sig-canvas'
 
 const drawSignature = () => {
-	var canvas = document.getElementById('sig-canvas') as HTMLCanvasElement
-	var ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+	const canvas = document.getElementById(ID_SIGN_CANVAS) as HTMLCanvasElement
+	const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+	const path = new Path2D()
+	const mouse = {} as any
 
-	var drawing = false
-	var mousePos = {
-		x: 0,
-		y: 0
+	function draw() {
+		// clear all
+		ctx.clearRect(0, 0, canvas.width, canvas.height)
+		// draw the single path
+		ctx.stroke(path)
+		// tell we need to redraw next frame
+		mouse.dirty = false
 	}
-	var lastPos = mousePos
 
-	canvas.addEventListener(
-		'mousedown',
-		function (e) {
-			drawing = true
-			lastPos = getMousePos(canvas, e)
-		},
-		false
-	)
-
-	canvas.addEventListener(
-		'mouseup',
-		function (e) {
-			drawing = false
-		},
-		false
-	)
-
-	canvas.addEventListener(
-		'mousemove',
-		function (e) {
-			mousePos = getMousePos(canvas, e)
-		},
-		false
-	)
-
-	// Add touch event support for mobile
-	canvas.addEventListener('touchstart', function (e) {}, false)
-
-	canvas.addEventListener(
-		'touchmove',
-		function (e) {
-			var touch = e.touches[0]
-			var me = new MouseEvent('mousemove', {
-				clientX: touch.clientX,
-				clientY: touch.clientY
-			})
-			canvas.dispatchEvent(me)
-		},
-		false
-	)
-
-	canvas.addEventListener(
-		'touchstart',
-		function (e) {
-			mousePos = getTouchPos(canvas, e)
-			var touch = e.touches[0]
-			var me = new MouseEvent('mousedown', {
-				clientX: touch.clientX,
-				clientY: touch.clientY
-			})
-			canvas.dispatchEvent(me)
-		},
-		false
-	)
-
-	canvas.addEventListener(
-		'touchend',
-		function (e) {
-			var me = new MouseEvent('mouseup', {})
-			canvas.dispatchEvent(me)
-		},
-		false
-	)
-
-	function getMousePos(canvasDom: any, mouseEvent: any) {
-		var rect = canvasDom.getBoundingClientRect()
-		return {
-			x: mouseEvent.clientX - rect.left,
-			y: mouseEvent.clientY - rect.top
+	canvas.onmousedown = (evt) => {
+		mouse.down = true
+		// always use the same path
+		path.moveTo(evt.offsetX, evt.offsetY)
+	}
+	document.onmouseup = (evt) => {
+		mouse.down = false
+	}
+	document.onmousemove = (evt) => {
+		if (mouse.down) {
+			const rect = canvas.getBoundingClientRect()
+			path.lineTo(evt.clientX - rect.left, evt.clientY - rect.top)
 		}
-	}
-
-	function getTouchPos(canvasDom: any, touchEvent: any) {
-		var rect = canvasDom.getBoundingClientRect()
-		return {
-			x: touchEvent.touches[0].clientX - rect.left,
-			y: touchEvent.touches[0].clientY - rect.top
+		if (!mouse.dirty) {
+			mouse.dirty = true
+			requestAnimationFrame(draw)
 		}
-	}
-
-	function renderCanvas() {
-		if (drawing) {
-			ctx.moveTo(lastPos.x, lastPos.y)
-			ctx.lineTo(mousePos.x, mousePos.y)
-			ctx.stroke()
-			lastPos = mousePos
-		}
-	}
-
-	// Prevent scrolling when touching the canvas
-	document.body.addEventListener(
-		'touchstart',
-		function (e) {
-			if (e.target == canvas) {
-				e.preventDefault()
-			}
-		},
-		false
-	)
-	document.body.addEventListener(
-		'touchend',
-		function (e) {
-			if (e.target == canvas) {
-				e.preventDefault()
-			}
-		},
-		false
-	)
-	document.body.addEventListener(
-		'touchmove',
-		function (e) {
-			if (e.target == canvas) {
-				e.preventDefault()
-			}
-		},
-		false
-	)
-	;(function drawLoop() {
-		requestAnimationFrame(drawLoop)
-		renderCanvas()
-	})()
-
-	function clearCanvas() {
-		canvas.width = canvas.width
 	}
 }
 
 const clearCanvas = () => {
-	if (canvas.value) {
-		canvas.value.width = canvas.value?.width
-	}
+	const canvas = document.getElementById(ID_SIGN_CANVAS) as HTMLCanvasElement
+	const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+	ctx?.clearRect(0, 0, canvas.width, canvas.height)
+	window.requestAnimationFrame(drawSignature)
 }
 
 const createSignature = () => {
-	const dataUrl = canvas.value?.toDataURL()
+	const canvas = document.getElementById(ID_SIGN_CANVAS) as HTMLCanvasElement
+	const dataUrl = canvas?.toDataURL()
 	emit('onCreate', dataUrl)
 }
 
