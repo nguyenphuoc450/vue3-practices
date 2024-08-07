@@ -2,6 +2,7 @@
   "name": "vue3-practices",
   "version": "0.0.0",
   "private": true,
+  "homepage": "https://nguyenphuoc450.github.io/vue3-practices/",
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
