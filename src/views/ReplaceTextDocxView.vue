@@ -103,27 +103,25 @@ const handleFindText = async () => {
 }
 
 const previousTextFind = () => {
-  const pageElement = document.querySelector('.page')
   const markElements = document.querySelectorAll('mark')
 
   const number = find.value.current >= 1 ? find.value.current - 1 : find.value.current
   find.value.current = number
 
   const scrollTo = markElements[number - 1]?.offsetTop
-  pageElement?.scrollTo({
+  window?.scrollTo({
     top: scrollTo,
     behavior: 'smooth',
   })
 }
 const nextTextFind = () => {
-  const pageElement = document.querySelector('.page')
   const markElements = document.querySelectorAll('mark')
 
   const number = find.value.current < find.value.total ? find.value.current + 1 : find.value.current
   find.value.current = number
 
   const scrollTo = markElements[number - 1]?.offsetTop
-  pageElement?.scrollTo({
+  window?.scrollTo({
     top: scrollTo,
     behavior: 'smooth',
   })
@@ -156,7 +154,7 @@ const downloadFile = () => {
 </script>
 
 <template>
-  <div class="p-1 lg:p-4 h-screen bg-[#f0f3f5] overflow-auto">
+  <div class="p-1 lg:p-4 bg-[#f0f3f5]">
     <input class="mb-2 p-2" type="file" placeholder="Upload here" accept=".docx" ref="inputFile" @change="changeFile" />
 
     <div class="mb-2 flex gap-4">
