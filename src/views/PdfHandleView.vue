@@ -129,7 +129,8 @@ const handleExport = async () => {
       doc.addImage(imgData, 'PNG', 0, yPosition, imgWidth, imgHeight)
     }
     window.open(doc.output('bloburl'), '_blank')
-    // doc.save('file.pdf')
+    const name = Date.now()?.toString()
+    // doc.save(name)
   } catch (error) {
     console.log(error)
   }

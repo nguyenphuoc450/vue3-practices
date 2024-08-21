@@ -10,14 +10,14 @@ const practices = ref([
     title: 'List sortable (drap drop)',
     to: '/list-sortable',
   },
-  {
-    title: 'Pdf handle',
-    to: '/pdf-handle',
-  },
-  {
-    title: 'Replace text from file docx',
-    to: '/replace-text-docx',
-  },
+  // {
+  //   title: 'Pdf handle',
+  //   to: '/pdf-handle',
+  // },
+  // {
+  //   title: 'Replace text from file docx',
+  //   to: '/replace-text-docx',
+  // },
 ])
 </script>
 
